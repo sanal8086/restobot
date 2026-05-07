@@ -1,0 +1,540 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+#app{font-family:var(--font-sans);max-width:420px;margin:0 auto;background:var(--color-background-secondary);border-radius:var(--border-radius-lg);border:0.5px solid var(--color-border-tertiary);overflow:hidden;min-height:560px;display:flex;flex-direction:column}
+#chat-header{background:#c05c28;padding:14px 16px;display:flex;align-items:center;gap:10px}
+#chat-header .avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px}
+#chat-header .info{color:#fff}
+#chat-header .info .name{font-size:14px;font-weight:500}
+#chat-header .info .sub{font-size:11px;opacity:0.8}
+#messages{flex:1;padding:12px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;max-height:460px}
+.bubble-wrap{display:flex;align-items:flex-end;gap:6px}
+.bubble-wrap.bot{flex-direction:row}
+.bubble-wrap.user{flex-direction:row-reverse}
+.bot-avatar{width:28px;height:28px;border-radius:50%;background:#c05c28;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;color:#fff;font-weight:500}
+.bubble{max-width:82%;padding:9px 13px;border-radius:16px;font-size:13px;line-height:1.5;color:var(--color-text-primary)}
+.bubble.bot{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-bottom-left-radius:4px}
+.bubble.user{background:#c05c28;color:#fff;border-bottom-right-radius:4px}
+.bubble .hi{font-size:15px;font-weight:500;margin-bottom:4px;color:var(--color-text-primary)}
+.bubble.user .hi{color:#fff}
+.options-wrap{display:flex;flex-wrap:wrap;gap:7px;padding:4px 0 4px 34px}
+.opt-btn{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:20px;padding:7px 14px;font-size:12px;cursor:pointer;color:var(--color-text-primary);transition:background 0.15s,border-color 0.15s;white-space:nowrap}
+.opt-btn:hover{background:var(--color-background-secondary);border-color:var(--color-border-primary)}
+.opt-btn.selected{background:#c05c28;color:#fff;border-color:#c05c28}
+.opt-btn.disabled{opacity:0.45;cursor:default;pointer-events:none}
+.progress-bar{height:3px;background:var(--color-border-tertiary);margin:0}
+.progress-fill{height:100%;background:#c05c28;transition:width 0.4s ease}
+.step-label{padding:6px 12px 0;font-size:11px;color:var(--color-text-tertiary);text-align:center}
+.dish-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color 0.15s}
+.dish-card:hover{border-color:#c05c28}
+.dish-card.chosen{border:1.5px solid #c05c28;background:#fff8f5}
+.dish-icon{font-size:24px;flex-shrink:0}
+.dish-info .dname{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.dish-info .ddesc{font-size:11px;color:var(--color-text-secondary);margin-top:2px}
+.dish-info .dtags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.tag{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500}
+.tag.pop{background:#faeeda;color:#633806}
+.tag.spice{background:#faece7;color:#712b13}
+.tag.diet{background:#e1f5ee;color:#085041}
+.tag.promo{background:#eeedfe;color:#3c3489}
+.meal-summary{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;margin-top:4px}
+.meal-summary .ms-title{font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.meal-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:12px}
+.meal-row:last-child{border-bottom:none;font-weight:500;padding-top:8px;font-size:13px}
+.meal-row .course{color:var(--color-text-secondary)}
+.total-btn{width:100%;margin-top:10px;padding:11px;background:#c05c28;color:#fff;border:none;border-radius:var(--border-radius-md);font-size:13px;font-weight:500;cursor:pointer}
+.typing{display:flex;gap:3px;align-items:center;padding:4px 0}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--color-border-secondary);animation:bounce 1.2s infinite}
+.typing span:nth-child(2){animation-delay:0.2s}
+.typing span:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.restart-btn{width:100%;padding:8px;background:transparent;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:12px;color:var(--color-text-secondary);cursor:pointer;margin-top:6px}
+.restart-btn:hover{background:var(--color-background-secondary)}
+</style>
+
+<div id="app">
+  <div id="chat-header">
+    <div class="avatar" style="font-size:18px">&#127869;</div>
+    <div class="info"><div class="name">Spice Garden, Thrissur</div><div class="sub">AI Menu Guide — online</div></div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="prog" style="width:0%"></div></div>
+  <div class="step-label" id="step-label">Let's find your perfect meal</div>
+  <div id="messages"></div>
+</div>
+
+<script>
+const M = document.getElementById('messages');
+const prog = document.getElementById('prog');
+const stepLbl = document.getElementById('step-label');
+
+const MENU = {
+  starters:{
+    veg:{
+      kerala:[ {n:'Papadam & Chutney',d:'Crispy papadam with coconut chutney',icon:'&#127858;',tags:['pop','mild']},
+               {n:'Banana Chips',d:'Salted raw banana chips',icon:'&#127815;',tags:['pop','mild']} ],
+      northindian:[ {n:'Paneer Tikka',d:'Spiced cottage cheese on skewer',icon:'&#129380;',tags:['pop','medium'],promo:true},
+                    {n:'Veg Seekh Kebab',d:'Mixed vegetable kebab',icon:'&#129382;',tags:['medium']} ],
+      arabic:[ {n:'Hummus & Pita',d:'Creamy hummus with warm pita',icon:'&#127828;',tags:['pop','mild']},
+               {n:'Falafel Plate',d:'Fried chickpea patties, tahini',icon:'&#129368;',tags:['mild']} ],
+      chinese:[ {n:'Veg Spring Rolls',d:'Crispy rolls, sweet chilli sauce',icon:'&#129379;',tags:['pop','mild']},
+                {n:'Chilli Paneer Dry',d:'Wok-tossed paneer, peppers',icon:'&#129362;',tags:['spicy'],promo:true} ],
+      italian:[ {n:'Bruschetta',d:'Toasted bread, tomato, basil',icon:'&#127829;',tags:['mild']},
+                {n:'Caprese Salad',d:'Fresh mozzarella, tomato, olive oil',icon:'&#129367;',tags:['mild']} ]
+    },
+    nonveg:{
+      kerala:[ {n:'Fish Fry (Karimeen)',d:'Pearl spot, Kerala spices, banana leaf',icon:'&#127829;',tags:['pop','spicy']},
+               {n:'Prawns Fry',d:'Crispy prawns, pepper & turmeric',icon:'&#129424;',tags:['spicy'],promo:true} ],
+      northindian:[ {n:'Chicken Tikka',d:'Tandoor grilled chicken, mint chutney',icon:'&#129382;',tags:['pop','medium']},
+                    {n:'Mutton Seekh Kebab',d:'Minced mutton, charcoal flavour',icon:'&#129382;',tags:['medium']} ],
+      arabic:[ {n:'Grilled Chicken Wings',d:'Arabic spice marinated wings',icon:'&#129381;',tags:['spicy'],promo:true},
+               {n:'Lamb Ouzi Bites',d:'Slow-cooked lamb, saffron',icon:'&#129366;',tags:['medium']} ],
+      chinese:[ {n:'Chicken Lollipop',d:'Crispy drumlets, hot garlic sauce',icon:'&#129382;',tags:['pop','spicy']},
+                {n:'Prawn Toast',d:'Sesame prawn on crispy bread',icon:'&#129424;',tags:['medium']} ],
+      italian:[ {n:'Chicken Bruschetta',d:'Grilled chicken, sun-dried tomato',icon:'&#129367;',tags:['mild']},
+                {n:'Prosciutto Board',d:'Cured ham, olives, rocket',icon:'&#129361;',tags:['mild']} ]
+    }
+  },
+  mains:{
+    veg:{
+      kerala:[ {n:'Avial',d:'Mixed vegetables, coconut, curry leaf',icon:'&#127858;',tags:['pop','mild']},
+               {n:'Kerala Sambar',d:'Lentil curry, drumstick, pearl onion',icon:'&#127858;',tags:['mild']} ],
+      northindian:[ {n:'Dal Makhani',d:'Slow cooked black lentils, butter',icon:'&#129367;',tags:['pop','mild'],promo:true},
+                    {n:'Paneer Butter Masala',d:'Rich tomato, cashew, cream gravy',icon:'&#129380;',tags:['pop','mild']} ],
+      arabic:[ {n:'Vegetable Mandi',d:'Slow-cooked veggies, saffron rice',icon:'&#127858;',tags:['mild'],promo:true},
+               {n:'Fattoush Bowl',d:'Fresh herbs, pomegranate, bread chips',icon:'&#129367;',tags:['mild']} ],
+      chinese:[ {n:'Veg Fried Rice',d:'Wok vegetables, soy, sesame',icon:'&#127859;',tags:['pop','mild']},
+                {n:'Veg Manchurian Gravy',d:'Saucy veggie balls, noodles',icon:'&#129379;',tags:['spicy']} ],
+      italian:[ {n:'Mushroom Risotto',d:'Arborio rice, porcini, parmesan',icon:'&#129372;',tags:['pop','mild']},
+                {n:'Margherita Pizza',d:'San Marzano tomato, fresh mozzarella',icon:'&#129829;',tags:['pop','mild']} ]
+    },
+    nonveg:{
+      kerala:[ {n:'Malabar Chicken Curry',d:'Coconut milk, roasted spices, nadan style',icon:'&#129382;',tags:['pop','spicy']},
+               {n:'Fish Moilee',d:'Delicate coconut fish curry, green chilli',icon:'&#127829;',tags:['mild'],promo:true} ],
+      northindian:[ {n:'Butter Chicken',d:'Tandoor chicken, velvety tomato gravy',icon:'&#129382;',tags:['pop','mild']},
+                    {n:'Mutton Rogan Josh',d:'Slow-cooked lamb, Kashmiri spices',icon:'&#129366;',tags:['spicy'],promo:true} ],
+      arabic:[ {n:'Chicken Mandi',d:'Slow-roasted chicken, saffron rice, raisins',icon:'&#129382;',tags:['pop','mild']},
+               {n:'Lamb Kabsa',d:'Saudi spiced lamb, basmati, pine nuts',icon:'&#129366;',tags:['medium']} ],
+      chinese:[ {n:'Chicken Fried Rice',d:'Egg, spring onion, soy, wok char',icon:'&#127859;',tags:['pop','mild']},
+                {n:'Prawn Noodles',d:'Stir-fried noodles, garlic, black pepper',icon:'&#129424;',tags:['medium']} ],
+      italian:[ {n:'Chicken Parmigiana',d:'Crumbed chicken, tomato, melted cheese',icon:'&#129382;',tags:['pop','mild']},
+                {n:'Spaghetti Bolognese',d:'Slow-cooked beef, rich tomato ragù',icon:'&#127829;',tags:['pop','mild']} ]
+    }
+  },
+  breads:{
+    veg:{
+      kerala:[ {n:'Appam',d:'Lacy rice hoppers, soft centre',icon:'&#127830;',tags:['pop']},
+               {n:'Kerala Parotta',d:'Flaky layered flatbread',icon:'&#129360;',tags:['pop'],promo:true} ],
+      northindian:[ {n:'Butter Naan',d:'Tandoor naan, melted butter',icon:'&#129360;',tags:['pop']},
+                    {n:'Garlic Roti',d:'Whole wheat, roasted garlic',icon:'&#129360;',tags:[]} ],
+      arabic:[ {n:'Khubz (Arabic Bread)',d:'Fluffy oven-baked white bread',icon:'&#129360;',tags:['pop']},
+               {n:'Markook',d:'Paper-thin flatbread, sesame seeds',icon:'&#129360;',tags:[]} ],
+      chinese:[ {n:'Steamed Bao Buns',d:'Soft buns, sesame glaze',icon:'&#129360;',tags:['pop']},
+                {n:'Prawn Crackers',d:'Light crispy prawn chips',icon:'&#127858;',tags:[]} ],
+      italian:[ {n:'Garlic Focaccia',d:'Olive oil, rosemary, sea salt',icon:'&#127829;',tags:['pop'],promo:true},
+                {n:'Ciabatta',d:'Crusty open-crumb bread',icon:'&#127829;',tags:[]} ]
+    },
+    nonveg:{
+      kerala:[ {n:'Kerala Parotta',d:'Flaky layered flatbread',icon:'&#129360;',tags:['pop'],promo:true},
+               {n:'Pathiri',d:'Rice flour flatbread, classic Malabar',icon:'&#127830;',tags:[]} ],
+      northindian:[ {n:'Butter Naan',d:'Tandoor naan, melted butter',icon:'&#129360;',tags:['pop']},
+                    {n:'Laccha Paratha',d:'Multi-layered crispy paratha',icon:'&#129360;',tags:[]} ],
+      arabic:[ {n:'Khubz (Arabic Bread)',d:'Fluffy oven-baked, pairs with mandi',icon:'&#129360;',tags:['pop']},
+               {n:'Saj Flatbread',d:'Thin stone-baked bread',icon:'&#129360;',tags:[]} ],
+      chinese:[ {n:'Steamed Bao Buns',d:'Soft steamed buns, hoisin glaze',icon:'&#129360;',tags:['pop']},
+                {n:'Prawn Crackers',d:'Light crispy prawn chips',icon:'&#127858;',tags:[]} ],
+      italian:[ {n:'Garlic Focaccia',d:'Olive oil, rosemary, sea salt',icon:'&#127829;',tags:['pop'],promo:true},
+                {n:'Ciabatta',d:'Crusty open-crumb Italian bread',icon:'&#127829;',tags:[]} ]
+    }
+  },
+  rice:{
+    veg:{
+      kerala:[ {n:'Kaalan Rice',d:'Thick yam-yogurt curry rice',icon:'&#127859;',tags:['mild']},
+               {n:'Ghee Rice',d:'Basmati, fried onion, cashews, raisins',icon:'&#127859;',tags:['pop'],promo:true} ],
+      northindian:[ {n:'Veg Biryani',d:'Dum-cooked spiced basmati, saffron',icon:'&#127859;',tags:['pop']},
+                    {n:'Jeera Rice',d:'Cumin basmati, coriander',icon:'&#127859;',tags:['mild']} ],
+      arabic:[ {n:'Saffron Rice',d:'Aromatic saffron basmati, raisins',icon:'&#127859;',tags:['pop'],promo:true},
+               {n:'Machboos (Veg)',d:'Spiced rice, mixed vegetables, loomi',icon:'&#127859;',tags:['medium']} ],
+      chinese:[ {n:'Veg Fried Rice',d:'Egg-free wok rice, seasonal greens',icon:'&#127859;',tags:['pop']},
+                {n:'Steamed Jasmine Rice',d:'Plain fragrant jasmine rice',icon:'&#127859;',tags:['mild']} ],
+      italian:[ {n:'Mushroom Risotto',d:'Arborio, porcini, parmesan',icon:'&#127859;',tags:['pop']},
+                {n:'Arancini',d:'Fried risotto balls, tomato sauce',icon:'&#127859;',tags:[]} ]
+    },
+    nonveg:{
+      kerala:[ {n:'Thalassery Biriyani',d:'Jeerakasala rice, tender chicken/mutton',icon:'&#127859;',tags:['pop','spicy'],promo:true},
+               {n:'Ghee Rice with Curry',d:'Basmati, fried onion, side curry',icon:'&#127859;',tags:['pop','mild']} ],
+      northindian:[ {n:'Chicken Biryani (Dum)',d:'Sealed pot dum-cooked biryani',icon:'&#127859;',tags:['pop','medium'],promo:true},
+                    {n:'Mutton Biryani',d:'Slow-cooked mutton, caramelised onion',icon:'&#127859;',tags:['spicy']} ],
+      arabic:[ {n:'Chicken Mandi Rice',d:'Whole roasted chicken, saffron rice',icon:'&#127859;',tags:['pop','mild']},
+               {n:'Lamb Kabsa',d:'Saudi spiced lamb, basmati',icon:'&#127859;',tags:['medium']} ],
+      chinese:[ {n:'Chicken Fried Rice',d:'Classic wok-char, soy, spring onion',icon:'&#127859;',tags:['pop','mild']},
+                {n:'Prawn Fried Rice',d:'Prawns, egg, sesame, scallion',icon:'&#127859;',tags:['medium'],promo:true} ],
+      italian:[ {n:'Chicken Risotto',d:'Arborio, grilled chicken, white wine',icon:'&#127859;',tags:['pop']},
+                {n:'Seafood Risotto',d:'Prawns, clams, saffron, parmesan',icon:'&#127859;',tags:[]} ]
+    }
+  },
+  desserts:[
+    {n:'Semiya Payasam',d:'Kerala vermicelli pudding, cardamom',icon:'&#127833;',cuisine:'Kerala',tags:['pop'],promo:true},
+    {n:'Gulab Jamun',d:'Soft milk dumplings, rose syrup',icon:'&#127844;',cuisine:'North Indian',tags:['pop']},
+    {n:'Umm Ali',d:'Arabic bread pudding, nuts, cream',icon:'&#127833;',cuisine:'Arabic',tags:['pop'],promo:true},
+    {n:'Mango Sorbet',d:'Fresh Alphonso mango, tangy-sweet',icon:'&#127825;',cuisine:'All',tags:['mild']},
+    {n:'Tiramisu',d:'Espresso, mascarpone, cocoa dusting',icon:'&#127849;',cuisine:'Italian',tags:['pop']},
+    {n:'Ice Cream (3 scoops)',d:'Vanilla, Pistachio, or Tender Coconut',icon:'&#127848;',cuisine:'All',tags:[]},
+  ]
+};
+
+const COMBOS = {
+  kerala:{
+    veg:['Avial pairs perfectly with Kerala Parotta and a glass of Sambharam (buttermilk)'],
+    nonveg:['Malabar Chicken Curry is best with Kerala Parotta + Thalassery Biriyani (half portion) — the classic Malabar combo!','Fish Moilee pairs beautifully with Appam']
+  },
+  northindian:{
+    veg:['Dal Makhani + Butter Naan + Jeera Rice is the ultimate North Indian comfort meal'],
+    nonveg:['Butter Chicken + Garlic Naan is the most-ordered combo here, 42 orders today!','Mutton Rogan Josh pairs perfectly with Laccha Paratha']
+  },
+  arabic:{
+    veg:['Hummus + Khubz + Vegetable Mandi makes a complete Arabic spread'],
+    nonveg:['Chicken Mandi + Khubz is our #1 Arabic combo — slow roasted perfection!','Grilled Wings + Lamb Kabsa Rice is a crowd favourite']
+  },
+  chinese:{
+    veg:['Chilli Paneer + Veg Fried Rice is the most ordered Chinese combo on weekends'],
+    nonveg:['Chicken Lollipop + Chicken Fried Rice — 38 orders this week alone!','Prawn Toast + Prawn Noodles for the seafood lover']
+  },
+  italian:{
+    veg:['Bruschetta + Mushroom Risotto + Tiramisu is our signature Italian set menu'],
+    nonveg:['Chicken Bruschetta + Chicken Parmigiana — a classic Italian dinner','Prosciutto Board + Spaghetti Bolognese for the meat lover']
+  }
+};
+
+let state = {
+  diet: null,
+  cuisine: null,
+  spice: null,
+  hunger: null,
+  starter: null,
+  main: null,
+  bread: null,
+  rice: null,
+  dessert: null,
+  step: 0
+};
+
+const steps = ['diet','cuisine','spice','hunger','starter','main','bread','rice','dessert','confirm'];
+const totalSteps = steps.length;
+
+function updateProgress(){
+  const pct = Math.round((state.step / (totalSteps-1)) * 100);
+  prog.style.width = pct + '%';
+  const labels = ['','','','','Starters','Main Course','Bread','Rice','Desserts','Your Meal'];
+  stepLbl.textContent = labels[state.step] || 'Your Meal';
+}
+
+function scrollDown(){
+  setTimeout(()=>{ M.scrollTop = M.scrollHeight; },80);
+}
+
+function addBotMsg(html, delay=0){
+  return new Promise(res=>{
+    setTimeout(()=>{
+      const typing = document.createElement('div');
+      typing.className='bubble-wrap bot';
+      typing.innerHTML='<div class="bot-avatar">SG</div><div class="bubble bot"><div class="typing"><span></span><span></span><span></span></div></div>';
+      M.appendChild(typing);
+      scrollDown();
+      setTimeout(()=>{
+        typing.remove();
+        const wrap=document.createElement('div');
+        wrap.className='bubble-wrap bot';
+        wrap.innerHTML=`<div class="bot-avatar">SG</div><div class="bubble bot">${html}</div>`;
+        M.appendChild(wrap);
+        scrollDown();
+        res();
+      },700);
+    },delay);
+  });
+}
+
+function addUserMsg(txt){
+  const wrap=document.createElement('div');
+  wrap.className='bubble-wrap user';
+  wrap.innerHTML=`<div class="bubble user">${txt}</div>`;
+  M.appendChild(wrap);
+  scrollDown();
+}
+
+function addOptions(opts, onPick){
+  const wrap=document.createElement('div');
+  wrap.className='options-wrap';
+  opts.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='opt-btn';
+    b.innerHTML=o.label;
+    b.onclick=()=>{
+      wrap.querySelectorAll('.opt-btn').forEach(x=>x.classList.add('disabled'));
+      b.classList.add('selected');
+      onPick(o);
+    };
+    wrap.appendChild(b);
+  });
+  M.appendChild(wrap);
+  scrollDown();
+}
+
+function addDishCards(dishes, onPick, multi=false){
+  const chosen=[];
+  const wrap=document.createElement('div');
+  wrap.style.cssText='display:flex;flex-direction:column;gap:7px;padding:4px 0 4px 34px';
+  dishes.forEach(d=>{
+    const card=document.createElement('div');
+    card.className='dish-card';
+    const tagHtml=d.tags.map(t=>{
+      if(t==='pop') return '<span class="tag pop">&#128293; Popular</span>';
+      if(t==='spicy') return '<span class="tag spice">&#127798; Spicy</span>';
+      if(t==='medium') return '<span class="tag spice">&#127798; Medium</span>';
+      if(t==='mild') return '<span class="tag diet">Mild</span>';
+      return '';
+    }).join('');
+    const promoTag=d.promo?'<span class="tag promo">&#11088; Chef\'s pick</span>':'';
+    card.innerHTML=`<div class="dish-icon">${d.icon}</div><div class="dish-info"><div class="dname">${d.n}</div><div class="ddesc">${d.d}</div><div class="dtags">${promoTag}${tagHtml}</div></div>`;
+    card.onclick=()=>{
+      if(!multi){
+        wrap.querySelectorAll('.dish-card').forEach(x=>x.classList.remove('chosen'));
+        card.classList.add('chosen');
+        setTimeout(()=>{
+          onPick(d);
+        },350);
+      } else {
+        card.classList.toggle('chosen');
+        const idx=chosen.findIndex(x=>x.n===d.n);
+        if(idx>-1) chosen.splice(idx,1); else chosen.push(d);
+      }
+    };
+    wrap.appendChild(card);
+  });
+  if(multi){
+    const btn=document.createElement('button');
+    btn.className='opt-btn';
+    btn.style.cssText='margin-left:34px;margin-top:4px;border-radius:var(--border-radius-md);width:calc(100% - 34px)';
+    btn.textContent='Continue with selection ';
+    btn.onclick=()=>{
+      if(chosen.length===0) chosen.push(dishes[0]);
+      onPick(chosen);
+      btn.disabled=true;
+      btn.style.opacity='0.5';
+    };
+    M.appendChild(wrap);
+    M.appendChild(btn);
+  } else {
+    M.appendChild(wrap);
+  }
+  scrollDown();
+}
+
+async function startChat(){
+  M.innerHTML='';
+  state={diet:null,cuisine:null,spice:null,hunger:null,starter:null,main:null,bread:null,rice:null,dessert:null,step:0};
+  updateProgress();
+  await addBotMsg('<div class="hi">&#128075; Namaskaram! Welcome to Spice Garden</div>I\'m your personal menu guide. I\'ll help you build the perfect meal in just a few taps — no scrolling through a long menu!<br><br>Let\'s start with one simple question:',300);
+  state.step=1; updateProgress();
+  await addBotMsg('&#127869; Are you dining as <b>veg, non-veg, or mix</b> today?',800);
+  addOptions([
+    {label:'&#129367; Pure Veg',val:'veg'},
+    {label:'&#129382; Non-Veg',val:'nonveg'},
+    {label:'&#127858; Mix / Flexible',val:'mix'}
+  ], async o=>{
+    const label = o.label.replace(/&#\d+;/g,'').trim();
+    addUserMsg(label);
+    state.diet = o.val==='mix'?'nonveg':o.val;
+    await askCuisine();
+  });
+}
+
+async function askCuisine(){
+  state.step=2; updateProgress();
+  await addBotMsg('Great! What <b>cuisine</b> are you feeling right now?',400);
+  addOptions([
+    {label:'&#127810; Kerala',val:'kerala'},
+    {label:'&#127568; North Indian',val:'northindian'},
+    {label:'&#129680; Arabic',val:'arabic'},
+    {label:'&#129366; Chinese',val:'chinese'},
+    {label:'&#127810; Italian',val:'italian'}
+  ], async o=>{
+    addUserMsg(o.label.replace(/&#\d+;/g,'').trim());
+    state.cuisine=o.val;
+    await askSpice();
+  });
+}
+
+async function askSpice(){
+  state.step=3; updateProgress();
+  await addBotMsg('&#127798; How bold do you want the flavours?',400);
+  addOptions([
+    {label:'&#129376; Mild & Gentle',val:'mild'},
+    {label:'&#127798; Medium Kick',val:'medium'},
+    {label:'&#128293; Full Spice',val:'spicy'}
+  ], async o=>{
+    addUserMsg(o.label.replace(/&#\d+;/g,'').trim());
+    state.spice=o.val;
+    await askHunger();
+  });
+}
+
+async function askHunger(){
+  state.step=3; updateProgress();
+  await addBotMsg('&#129300; How hungry are you?',400);
+  addOptions([
+    {label:'&#128077; Light — starter only',val:'light'},
+    {label:'&#129497; Moderate — starter + main',val:'moderate'},
+    {label:'&#127857; Feast — full meal!',val:'full'}
+  ], async o=>{
+    addUserMsg(o.label.replace(/&#\d+;/g,'').trim());
+    state.hunger=o.val;
+    await showStarters();
+  });
+}
+
+async function showStarters(){
+  state.step=4; updateProgress();
+  const dietKey=state.diet;
+  const cuisineKey=state.cuisine;
+  const dishes=MENU.starters[dietKey][cuisineKey]||[];
+  await addBotMsg(`&#127862; Perfect! Here are your <b>${cuisineKey==='northindian'?'North Indian':cuisineKey.charAt(0).toUpperCase()+cuisineKey.slice(1)} starters</b> — tap to pick one:`,500);
+  addDishCards(dishes, async d=>{
+    state.starter=d;
+    addUserMsg('&#10003; ' + d.n);
+    if(state.hunger==='light'){
+      await showFinal();
+    } else {
+      await showMains();
+    }
+  });
+}
+
+async function showMains(){
+  state.step=5; updateProgress();
+  const dishes=MENU.mains[state.diet][state.cuisine]||[];
+  await addBotMsg(`&#129367; Now pick your <b>main course</b>:`,500);
+  addDishCards(dishes, async d=>{
+    state.main=d;
+    addUserMsg('&#10003; ' + d.n);
+    await showBreads();
+  });
+}
+
+async function showBreads(){
+  state.step=6; updateProgress();
+  const dishes=MENU.breads[state.diet][state.cuisine]||[];
+  await addBotMsg(`&#129360; Add a <b>bread</b> to go with it?`,500);
+  const withSkip=[...dishes];
+  addDishCards(withSkip, async d=>{
+    state.bread=d;
+    addUserMsg('&#10003; ' + d.n);
+    await showRice();
+  });
+  const skipBtn=document.createElement('button');
+  skipBtn.className='opt-btn';
+  skipBtn.style.cssText='margin-left:34px;margin-top:4px';
+  skipBtn.textContent='Skip bread';
+  skipBtn.onclick=async()=>{
+    skipBtn.classList.add('disabled');
+    addUserMsg('No bread thanks');
+    state.bread=null;
+    await showRice();
+  };
+  M.appendChild(skipBtn);
+  scrollDown();
+}
+
+async function showRice(){
+  state.step=7; updateProgress();
+  const dishes=MENU.rice[state.diet][state.cuisine]||[];
+  await addBotMsg(`&#127859; Would you like a <b>rice dish</b>?`,500);
+  addDishCards(dishes, async d=>{
+    state.rice=d;
+    addUserMsg('&#10003; ' + d.n);
+    await showDesserts();
+  });
+  const skipBtn=document.createElement('button');
+  skipBtn.className='opt-btn';
+  skipBtn.style.cssText='margin-left:34px;margin-top:4px';
+  skipBtn.textContent='Skip rice';
+  skipBtn.onclick=async()=>{
+    skipBtn.classList.add('disabled');
+    addUserMsg('No rice thanks');
+    state.rice=null;
+    await showDesserts();
+  };
+  M.appendChild(skipBtn);
+  scrollDown();
+}
+
+async function showDesserts(){
+  if(state.hunger!=='full'){
+    await showFinal(); return;
+  }
+  state.step=8; updateProgress();
+  await addBotMsg(`&#127848; End on a sweet note? Pick a <b>dessert</b>:`,500);
+  addDishCards(MENU.desserts, async d=>{
+    state.dessert=d;
+    addUserMsg('&#10003; ' + d.n);
+    await showFinal();
+  });
+  const skipBtn=document.createElement('button');
+  skipBtn.className='opt-btn';
+  skipBtn.style.cssText='margin-left:34px;margin-top:4px';
+  skipBtn.textContent='No dessert today';
+  skipBtn.onclick=async()=>{
+    skipBtn.classList.add('disabled');
+    addUserMsg('No dessert today');
+    state.dessert=null;
+    await showFinal();
+  };
+  M.appendChild(skipBtn);
+  scrollDown();
+}
+
+async function showFinal(){
+  state.step=9; updateProgress();
+  const comboLine = COMBOS[state.cuisine]?.[state.diet]?.[0] || '';
+  await addBotMsg('&#127881; Your perfect meal is ready! Here\'s what we\'ve put together for you:',600);
+
+  const rows=[];
+  if(state.starter) rows.push({course:'Starter',item:state.starter.n,icon:state.starter.icon});
+  if(state.main) rows.push({course:'Main Course',item:state.main.n,icon:state.main.icon});
+  if(state.bread) rows.push({course:'Bread',item:state.bread.n,icon:state.bread.icon});
+  if(state.rice) rows.push({course:'Rice',item:state.rice.n,icon:state.rice.icon});
+  if(state.dessert) rows.push({course:'Dessert',item:state.dessert.n,icon:state.dessert.icon});
+
+  const rowsHtml=rows.map(r=>`<div class="meal-row"><span class="course">${r.course}</span><span>${r.icon} ${r.item}</span></div>`).join('');
+
+  const wrap=document.createElement('div');
+  wrap.style.cssText='padding:0 0 0 34px';
+  wrap.innerHTML=`<div class="meal-summary">
+    <div class="ms-title">Your complete meal</div>
+    ${rowsHtml}
+    <div class="meal-row"><span class="course">Cuisine</span><span style="text-transform:capitalize">${state.cuisine==='northindian'?'North Indian':state.cuisine}</span></div>
+    <button class="total-btn">&#9989; Confirm this meal</button>
+  </div>`;
+  wrap.querySelector('.total-btn').onclick=()=>{
+    addUserMsg('&#9989; Confirmed! Let\'s eat!');
+    showThankYou();
+  };
+  M.appendChild(wrap);
+  scrollDown();
+
+  if(comboLine){
+    await addBotMsg(`&#128161; <b>Pro tip:</b> ${comboLine}`,900);
+  }
+}
+
+async function showThankYou(){
+  await addBotMsg('&#127881; Wonderful! Your order is on its way.<br><br>&#128150; Enjoy your meal at Spice Garden. Your food will be served fresh!',600);
+  const rb=document.createElement('button');
+  rb.className='restart-btn';
+  rb.textContent='&#8635; Start over / order again';
+  rb.onclick=()=>startChat();
+  M.appendChild(rb);
+  scrollDown();
+}
+
+startChat();
+</script>

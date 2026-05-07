@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { margin: 0; padding: 0; }
+    body { background: transparent; overflow: hidden; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <script type="module">
+    import * as THREE from '/three.module.js';
+    import { GLTFLoader } from '/GLTFLoader.js';
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x000000, 0);
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 5);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 2));
+
+    // CUSTOM LOADER TO REMOVE WHITE BACKGROUND VIA CANVAS
+    const img = new Image();
+    img.src = '/kid.png';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      
+      // Make anything "white-ish" transparent
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i+1];
+        const b = data[i+2];
+        if (r > 220 && g > 220 && b > 220) {
+          data[i+3] = 0; // Alpha = 0
+        }
+      }
+      ctx.putImageData(imageData, 0, 0);
+      
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.minFilter = THREE.LinearFilter;
+      
+      const material = new THREE.MeshBasicMaterial({ 
+        map: texture, 
+        transparent: true,
+        opacity: 0
+      });
+
+      const geometry = new THREE.PlaneGeometry(3, 3.8);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.scale.setScalar(0.01);
+      mesh.visible = false;
+      scene.add(mesh);
+
+      const startTime = Date.now();
+      function internalAnimate() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        
+        if (elapsed < 0.8) {
+          const p = elapsed / 0.8;
+          // Character simply fades and scales in
+          mesh.visible = true;
+          mesh.scale.setScalar(0.01 + p * 0.99);
+          material.opacity = p;
+        } else {
+          // Steady state
+          mesh.scale.setScalar(1.0);
+          material.opacity = 1.0;
+          mesh.visible = true;
+        }
+        
+        requestAnimationFrame(internalAnimate);
+      }
+      internalAnimate();
+    };
+
+    function animate() {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
