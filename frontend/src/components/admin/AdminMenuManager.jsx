@@ -161,12 +161,34 @@ export default function AdminMenuManager() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 30, flexWrap: 'wrap', gap: 10 }}>
-        <h1>Menu Manager</h1>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button className="btn-outline" onClick={() => setShowMainCatForm(true)}>+ Add Main Category</button>
-          <button className="btn-outline" onClick={() => setShowCatForm(true)}>+ Add Sub Category</button>
-          <button className="btn-primary" onClick={() => setShowItemForm(true)}>+ Add Food Item</button>
+      <style>{`
+        .menu-manager-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        .menu-manager-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .menu-manager-actions button { font-size: 13px; padding: 10px 14px; }
+        .menu-layout { display: flex; gap: 20px; flex-direction: row; }
+        .menu-sidebar { width: 260px; flex-shrink: 0; }
+        .menu-items-panel { flex: 1; min-width: 0; }
+        .item-row { display: flex; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid #F5F5F5; }
+        .item-row-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .modal-card { width: 90vw; max-width: 480px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        @media (max-width: 640px) {
+          .menu-layout { flex-direction: column !important; }
+          .menu-sidebar { width: 100% !important; }
+          .item-row { flex-wrap: wrap; gap: 10px; }
+          .item-row-info { min-width: 0; flex: 1 1 calc(100% - 70px); }
+          .item-row-actions { width: 100%; justify-content: flex-end; }
+          .form-grid-2 { grid-template-columns: 1fr !important; }
+          .menu-manager-actions { width: 100%; }
+          .menu-manager-actions button { flex: 1; }
+        }
+      `}</style>
+      <div className="menu-manager-header">
+        <h1 style={{ fontSize: 26, fontWeight: 900, margin: 0 }}>Menu Manager</h1>
+        <div className="menu-manager-actions">
+          <button className="btn-outline" onClick={() => setShowMainCatForm(true)}>+ Main Category</button>
+          <button className="btn-outline" onClick={() => setShowCatForm(true)}>+ Sub Category</button>
+          <button className="btn-primary" onClick={() => setShowItemForm(true)}>+ Food Item</button>
         </div>
       </div>
 
@@ -194,9 +216,9 @@ export default function AdminMenuManager() {
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 30, flexDirection: 'row' }}>
+      <div className="menu-layout">
         {/* Structure Sidebar for Active Main Category */}
-        <div style={{ width: 280, flexShrink: 0 }} className="card">
+        <div className="menu-sidebar card">
           <div style={{ padding: 15, borderBottom: '1px solid #EEE', fontWeight: 900 }}>Sub Categories</div>
           {(() => {
             if (!activeMainCategory) return <div style={{ padding: 15, color: '#888' }}>Select a main category first</div>;
@@ -272,30 +294,32 @@ export default function AdminMenuManager() {
         </div>
 
         {/* Items List */}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="menu-items-panel">
           <div className="card" style={{ padding: 25 }}>
             <h3 style={{ fontSize: 20, fontWeight: 800 }}>Items in {categories.find(c => c.id === activeCategory)?.name || 'Category'}</h3>
             <div style={{ marginTop: 20 }}>
               {items.filter(i => i.category_id === activeCategory).length === 0 && <p style={{ color: '#888' }}>No items in this sub category.</p>}
               {items.filter(i => i.category_id === activeCategory).map(item => (
-                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '15px 0', borderBottom: '1px solid #F5F5F5', opacity: item.is_enabled === false ? 0.5 : 1 }}>
-                  <img src={item.image_url} style={{ width: 60, height: 60, borderRadius: 12, objectFit: 'cover', background: '#F5F5F5' }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, color: '#1A1A1A' }}>{item.name} {!item.is_enabled && '(Disabled)'}</div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                      <div style={{ fontSize: 13, color: '#FF6B35', fontWeight: 700 }}>₹{item.price}</div>
-                      <div style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: item.priority === 'high' ? '#FFEBEB' : item.priority === 'low' ? '#EBF5FF' : '#F5F5F5', color: item.priority === 'high' ? '#FF4B4B' : item.priority === 'low' ? '#3498DB' : '#888', fontWeight: 800, textTransform: 'uppercase' }}>{item.priority || 'medium'}</div>
+                <div key={item.id} className="item-row" style={{ opacity: item.is_enabled === false ? 0.5 : 1 }}>
+                  <img src={item.image_url} style={{ width: 56, height: 56, borderRadius: 10, objectFit: 'cover', background: '#F5F5F5', flexShrink: 0 }} />
+                  <div className="item-row-info" style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, color: '#1A1A1A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.name} {!item.is_enabled && <span style={{ color: '#999', fontWeight: 500, fontSize: 12 }}>(Off)</span>}
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 3 }}>
+                      <span style={{ fontSize: 13, color: '#FF6B35', fontWeight: 700 }}>₹{item.price}</span>
+                      <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 4, background: item.priority === 'high' ? '#FFEBEB' : item.priority === 'low' ? '#EBF5FF' : '#F5F5F5', color: item.priority === 'high' ? '#FF4B4B' : item.priority === 'low' ? '#3498DB' : '#888', fontWeight: 800, textTransform: 'uppercase' }}>{item.priority || 'med'}</span>
                     </div>
                   </div>
-                  
-                  {/* Toggle Switch */}
-                  <div onClick={() => handleToggleItem(item)}
-                    style={{ width: 44, height: 24, borderRadius: 24, cursor: 'pointer', background: item.is_enabled !== false ? '#1DB954' : '#CCC', position: 'relative', transition: '0.3s' }}>
-                    <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#FFF', position: 'absolute', top: 2, left: item.is_enabled !== false ? 22 : 2, transition: '0.3s', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} />
+                  <div className="item-row-actions">
+                    {/* Toggle Switch */}
+                    <div onClick={() => handleToggleItem(item)}
+                      style={{ width: 44, height: 24, borderRadius: 24, cursor: 'pointer', background: item.is_enabled !== false ? '#1DB954' : '#CCC', position: 'relative', transition: '0.3s', flexShrink: 0 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#FFF', position: 'absolute', top: 2, left: item.is_enabled !== false ? 22 : 2, transition: '0.3s', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} />
+                    </div>
+                    <button className="btn-outline" style={{ padding: '6px 12px', fontSize: 12, whiteSpace: 'nowrap' }} onClick={() => handleEditClick(item)}>Edit</button>
+                    <button className="btn-outline" style={{ color: '#FF4B4B', borderColor: 'rgba(255,0,0,0.1)', padding: '6px 12px', fontSize: 12, whiteSpace: 'nowrap' }} onClick={() => handleDeleteItem(item.id)}>Del</button>
                   </div>
-
-                  <button className="btn-outline" style={{ padding: '6px 12px', fontSize: 13 }} onClick={() => handleEditClick(item)}>Edit</button>
-                  <button className="btn-outline" style={{ color: '#FF4B4B', borderColor: 'rgba(255,0,0,0.1)', padding: '6px 12px', fontSize: 13 }} onClick={() => handleDeleteItem(item.id)}>Delete</button>
                 </div>
               ))}
             </div>
@@ -306,7 +330,7 @@ export default function AdminMenuManager() {
       {/* Forms */}
       {showMainCatForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="card" style={{ width: 400, padding: 30 }}>
+          <div className="card modal-card">
             <h3 style={{ fontSize: 22, fontWeight: 900 }}>New Main Category</h3>
             <form onSubmit={handleAddMainCategory} style={{ display: 'flex', flexDirection: 'column', gap: 15, marginTop: 20 }}>
               <input type="text" placeholder="Name (e.g. Indian, Arabic)" required style={{ background: '#F5F5F5' }}
@@ -322,7 +346,7 @@ export default function AdminMenuManager() {
 
       {showCatForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="card" style={{ width: 400, padding: 30 }}>
+          <div className="card modal-card">
             <h3 style={{ fontSize: 22, fontWeight: 900 }}>New Sub Category</h3>
             <form onSubmit={handleAddCategory} style={{ display: 'flex', flexDirection: 'column', gap: 15, marginTop: 20 }}>
               <select required style={{ background: '#F5F5F5', padding: 15, borderRadius: 12, border: 'none' }}
@@ -359,11 +383,11 @@ export default function AdminMenuManager() {
 
       {showItemForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div className="card" style={{ width: 500, padding: 30, maxHeight: '90vh', overflowY: 'auto' }}>
+          <div className="card modal-card">
             <h3 style={{ fontSize: 22, fontWeight: 900 }}>{editItemId ? 'Edit Item' : 'New Item'}</h3>
             <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: 15, marginTop: 20 }}>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="form-grid-2">
                 <select required style={{ background: '#F5F5F5', border: 'none', padding: 15, borderRadius: 12 }} value={newItem.main_category_id}
                   onChange={e => setNewItem({ ...newItem, main_category_id: e.target.value, category_id: '' })}>
                   <option value="">Select Main Category</option>
@@ -391,7 +415,7 @@ export default function AdminMenuManager() {
                   <img src={newItem.image_url} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 10 }} />
                 )}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="form-grid-2">
                 <select style={{ background: '#F5F5F5', border: 'none', padding: 15, borderRadius: 12 }} value={newItem.item_type}
                   onChange={e => setNewItem({ ...newItem, item_type: e.target.value })}>
                   <option value="veg">Veg</option>
@@ -405,7 +429,7 @@ export default function AdminMenuManager() {
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div className="form-grid-2">
                 <select style={{ background: '#F5F5F5', border: 'none', padding: 15, borderRadius: 12 }} value={newItem.taste}
                   onChange={e => setNewItem({ ...newItem, taste: e.target.value })}>
                   <option value="spicy">Spicy</option>

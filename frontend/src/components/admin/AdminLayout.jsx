@@ -26,13 +26,13 @@ export default function AdminLayout() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }}>
       {/* Mobile Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 25px', background: '#FFF', borderBottom: '1px solid #EEE', '@media (min-width: 768px)': { display: 'none' } }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '15px 20px', background: '#FFF', borderBottom: '1px solid #EEE' }}>
+        <button onClick={() => setMenuOpen(!menuOpen)} style={{ background: 'none', border: 'none', fontSize: 26, cursor: 'pointer', lineHeight: 1, color: '#1A1A1A' }} className="mobile-only-btn">
+          ☰
+        </button>
         <div style={{ fontSize: 20, fontWeight: 900, color: '#FF6B35' }}>
           RESTO<span style={{ color: '#1A1A1A' }}>BOT</span>
         </div>
-        <button onClick={() => setMenuOpen(!menuOpen)} style={{ background: 'none', border: 'none', fontSize: 24, cursor: 'pointer', display: 'block' }} className="mobile-only-btn">
-          ☰
-        </button>
       </div>
 
       <div style={{ display: 'flex', flex: 1, flexDirection: 'row', overflow: 'hidden' }} className="admin-layout-container">
