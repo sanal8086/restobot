@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify
-from flask_cors import cross_origin
 import bcrypt
 import time
 import random
@@ -56,7 +55,6 @@ def send_email(target, code):
 SUPERADMIN_HASH = b'$2b$12$cuCI8t7nwl2Ol3CER8vce.uZhgU9w922jT8inRmS17ra81ttI39Ne'
 
 @superadmin_bp.route('/superadmin/login', methods=['POST', 'OPTIONS'])
-@cross_origin()
 def login():
     data = request.get_json()
     email = data.get('email')
@@ -77,7 +75,6 @@ def login():
     return jsonify({'message': 'Invalid credentials'}), 401
 
 @superadmin_bp.route('/superadmin/verify', methods=['POST', 'OPTIONS'])
-@cross_origin()
 def verify_mfa():
     data = request.get_json()
     email = data.get('email')
@@ -95,7 +92,6 @@ def verify_mfa():
     return jsonify({'message': 'Invalid or expired MFA code'}), 401
 
 @superadmin_bp.route('/superadmin/create-restaurant', methods=['POST', 'OPTIONS'])
-@cross_origin()
 @token_required
 def create_restaurant_admin():
     db_ref = get_db()

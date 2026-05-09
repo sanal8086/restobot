@@ -30,14 +30,20 @@ def create_app():
     app.register_blueprint(wishlist_bp, url_prefix='/api')
     app.register_blueprint(guests_bp, url_prefix='/api')
 
-    # CORS: allow Vercel frontend + local dev
-    # Set FRONTEND_URL env var on Render to your Vercel URL, e.g. https://restobot.vercel.app
-    frontend_url = os.environ.get('FRONTEND_URL', '*')
-    allowed_origins = [frontend_url] if frontend_url != '*' else '*'
+    # CORS: allow Vercel frontend
+    # FRONTEND_URL env var on Render should be your Vercel URL e.g. https://restobot-zeta.vercel.app
+    # We support multiple origins by splitting on comma if needed
+    frontend_url = os.environ.get('FRONTEND_URL', '')
+    if frontend_url:
+        allowed_origins = [o.strip() for o in frontend_url.split(',')]
+    else:
+        allowed_origins = '*'  # local dev fallback
 
+    # NOTE: supports_credentials=True + origins='*' is INVALID CORS and causes browser blocks.
+    # Since we use JWT in Authorization headers (not cookies), credentials=False is correct.
     CORS(app,
-         resources={r"/api/*": {"origins": allowed_origins}},
-         supports_credentials=True,
+         resources={r"/*": {"origins": allowed_origins}},
+         supports_credentials=False,
          allow_headers=["Content-Type", "Authorization"],
          methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"])
 
