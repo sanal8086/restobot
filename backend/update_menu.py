@@ -125,7 +125,7 @@ Chicken in Hot Garlic Sauce — 330
 
 CATEGORY_IMAGES = {
     'Turkish': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=300&q=80',
-    'Rolls': 'https://images.unsplash.com/photo-1626200419199-341fe14589d8?auto=format&fit=crop&w=300&q=80',
+    'Rolls': 'https://images.unsplash.com/photo-1606491956689-2ea866880c84?auto=format&fit=crop&w=300&q=80',
     'Salads': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=300&q=80',
     'Indian': 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=300&q=80',
     'Kerala': 'https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?auto=format&fit=crop&w=300&q=80',
@@ -222,6 +222,7 @@ def seed_new_menu():
 
             is_signature = '(Chef Signature Dish)' in item['name'] or 'Signature' in item['name'] or '(Hotspot Signature' in item['name']
 
+            print(f"Adding item: {item['name']} with image: {CATEGORY_IMAGES.get(main_name)}")
             items_ref.push({
                 'name': item['name'],
                 'description': item['description'] or f"Delicious {item['name']} from our {section_name.lower()} selection.",
