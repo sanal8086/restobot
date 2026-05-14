@@ -211,12 +211,16 @@ def seed_new_menu():
 
         for item in section['items']:
             item_cat_id = cat_id
+            item_course_type = course_type
             if 'Ghee Rice' in item['name']:
                 rice_cat_key = f"{mc_id}_Rice"
                 if rice_cat_key not in cats_cache:
                     rc = cats_ref.push({'name': 'Rice', 'display_order': 100, 'main_category_id': mc_id, 'course_type': 'rice'})
                     cats_cache[rice_cat_key] = rc.key
                 item_cat_id = cats_cache[rice_cat_key]
+                item_course_type = 'rice'
+
+            is_signature = '(Chef Signature Dish)' in item['name'] or 'Signature' in item['name'] or '(Hotspot Signature' in item['name']
 
             items_ref.push({
                 'name': item['name'],
@@ -225,13 +229,15 @@ def seed_new_menu():
                 'image_url': CATEGORY_IMAGES.get(main_name),
                 'main_category_id': mc_id,
                 'category_id': item_cat_id,
+                'course_type': item_course_type,
                 'item_type': get_item_type(item['name']),
                 'spice_level': 3,
                 'heaviness': 'medium',
                 'is_enabled': True,
-                'is_bestseller': '(Chef Signature Dish)' in item['name'] or 'Signature' in item['name']
+                'priority': 'high' if is_signature else 'medium',
+                'is_bestseller': is_signature
             })
-    print("SUCCESS: Menu updated with images!")
+    print("SUCCESS: Menu updated with priority and course_type!")
 
 if __name__ == '__main__':
     seed_new_menu()

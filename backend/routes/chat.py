@@ -96,17 +96,22 @@ def evaluate_meal():
     You are an AI Menu Evaluator. The user is about to confirm the following meal selections:
     Selections: {sel_str}
     
-    Your task is to analyze these selections and suggest ONE missing complementary item from the menu to increase their order value, or compliment their perfect choice.
-    For example, if they selected a Curry but no Bread/Rice, suggest Bread or Rice.
-    If they selected a heavy/spicy meal, suggest a refreshing Drink or Dessert.
+    Your task is to analyze these selections and suggest EXACTLY ONE missing complementary item from the menu to enhance their dining experience.
     
-    Current Menu:
+    Logic for suggestions:
+    - If they have ONLY Main Course(s), suggest a Starter or a Dessert.
+    - If they have ONLY Starters, suggest a Main Course.
+    - If they have a Main Course (Curry) but no Rice or Bread, suggest Ghee Rice or a Bread.
+    - If they have a heavy meal, suggest a Salad or a light Dessert.
+    - Always prefer suggesting a "Signature Dish" or "Bestseller" if it fits.
+    
+    Current Menu for "{res_data.get('name')}":
     {menu_str}
     
-    You must respond ONLY with a valid JSON object matching this schema:
+    Response format (JSON ONLY):
     {{
-      "suggestion_text": "A short 1-2 sentence recommendation. Example: 'Butter Chicken pairs wonderfully with Garlic Naan. Should I add it for you?'",
-      "suggested_item_id": "The exact ID of the item you recommend, or null if the meal is perfect as is"
+      "suggestion_text": "A friendly, persuasive suggestion. Example: 'Your meal looks great! Would you like to add our Signature Lahori Chicken as a starter to perfectly begin your feast?'",
+      "suggested_item_id": "The ID of the item, or null ONLY if they already have a perfectly balanced multi-course meal (Starter + Main + Rice/Bread)."
     }}
     """
     
