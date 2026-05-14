@@ -123,12 +123,22 @@ Paneer Choice of Sauce (Manchurian / Chilly) — 340
 Chicken in Hot Garlic Sauce — 330
 """
 
+CATEGORY_IMAGES = {
+    'Turkish': 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=300&q=80',
+    'Rolls': 'https://images.unsplash.com/photo-1626200419199-341fe14589d8?auto=format&fit=crop&w=300&q=80',
+    'Salads': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=300&q=80',
+    'Indian': 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=300&q=80',
+    'Kerala': 'https://images.unsplash.com/photo-1516714435131-44d6b64dc6a2?auto=format&fit=crop&w=300&q=80',
+    'Starters': 'https://images.unsplash.com/photo-1541518763669-27fef04b14ea?auto=format&fit=crop&w=300&q=80',
+    'Soups': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=300&q=80',
+    'Noodles': 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=300&q=80',
+    'Wok': 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=300&q=80'
+}
+
 def parse_menu(text):
     sections = []
     current_section = None
-    
     lines = [line.strip() for line in text.split('\n') if line.strip()]
-    
     for line in lines:
         if ' — ' not in line and '/' not in line and line.isupper():
             current_section = {'name': line, 'items': []}
@@ -136,69 +146,34 @@ def parse_menu(text):
         elif current_section:
             if ' — ' in line:
                 name, price_str = line.split(' — ', 1)
-                # Handle cases like "200 / 390 / 750" or "As per size"
-                if 'As per size' in price_str:
-                    price = 0 # Placeholder for "As per size"
-                    description = "Price as per size"
-                else:
-                    prices = re.findall(r'\d+', price_str)
-                    price = int(prices[0]) if prices else 0
-                    description = f"Options: {price_str}" if len(prices) > 1 else ""
-                
+                prices = re.findall(r'\d+', price_str)
+                price = int(prices[0]) if prices else 0
+                description = f"Options: {price_str}" if len(prices) > 1 else ""
                 current_section['items'].append({
                     'name': name.strip(),
                     'price': price,
                     'description': description
                 })
-            elif '/' in line and not any(c.isdigit() for c in line.split('/')[0]):
-                # This handles sub-categories or multi-options without prices yet
-                # e.g. Chicken / Veg / Cheese / Egg with Cheese — 269 / 230
-                # Actually, the previous regex might handle it if it follows the — format.
-                pass
-    
     return sections
 
 def get_item_type(name):
     non_veg_keywords = ['chicken', 'beef', 'mutton', 'lamb', 'fish', 'prawn', 'egg', 'wings', 'kebab', 'tikka', 'kheema', 'meat', 'liver', 'pothu', 'kabab']
-    veg_keywords = ['veg', 'paneer', 'cheese', 'dal', 'mushroom', 'potato', 'french fries', 'ghee', 'corn', 'cauli flower', 'hummoos', 'salad']
-    
     name_lower = name.lower()
-    
-    # If it says "Paneer Tikka" it should be veg
-    if 'paneer' in name_lower:
-        return 'veg'
-    
+    if 'paneer' in name_lower: return 'veg'
     for kw in non_veg_keywords:
-        if kw in name_lower:
-            return 'non-veg'
-    
+        if kw in name_lower: return 'non-veg'
     return 'veg'
-
-def get_spice_level(name):
-    spicy_keywords = ['chilli', 'schezwan', 'pepper', 'hot', 'spicy', 'kungpau', 'manchow', 'dragon', 'roast']
-    name_lower = name.lower()
-    for kw in spicy_keywords:
-        if kw in name_lower:
-            return 4
-    return 2
 
 def seed_new_menu():
     db_ref = get_db()
     restaurants = db_ref.child('restaurants').get()
-    if not restaurants:
-        print("No restaurants found.")
-        return
+    if not restaurants: return
     res_id = list(restaurants.keys())[0]
-    print(f"Updating menu for restaurant ID: {res_id}")
-
-    # Clear existing
     db_ref.child(f'restaurants/{res_id}/main_categories').delete()
     db_ref.child(f'restaurants/{res_id}/categories').delete()
     db_ref.child(f'restaurants/{res_id}/items').delete()
 
     sections = parse_menu(MENU_TEXT)
-    
-    # Hierarchy Mapping
     mapping = {
         'TURKISH CUISINE': {'main': 'Turkish', 'cat': 'Turkish Specialties', 'type': 'main'},
         'KATI ROLLS': {'main': 'Rolls', 'cat': 'Kati Rolls', 'type': 'starter'},
@@ -213,56 +188,33 @@ def seed_new_menu():
 
     main_cats_cache = {}
     cats_cache = {}
-
     main_cats_ref = db_ref.child(f'restaurants/{res_id}/main_categories')
     cats_ref = db_ref.child(f'restaurants/{res_id}/categories')
     items_ref = db_ref.child(f'restaurants/{res_id}/items')
 
-    for i, section in enumerate(sections):
+    for section in sections:
         section_name = section['name']
         map_info = mapping.get(section_name)
-        
-        if not map_info:
-            print(f"Skipping unknown section: {section_name}")
-            continue
-            
+        if not map_info: continue
         main_name = map_info['main']
         if main_name not in main_cats_cache:
             mc = main_cats_ref.push({'name': main_name, 'display_order': len(main_cats_cache) + 1})
             main_cats_cache[main_name] = mc.key
-            
         mc_id = main_cats_cache[main_name]
-        
         cat_name = map_info['cat']
         course_type = map_info['type']
-        
         cat_key = f"{mc_id}_{cat_name}"
         if cat_key not in cats_cache:
-            c = cats_ref.push({
-                'name': cat_name, 
-                'display_order': len(cats_cache) + 1, 
-                'main_category_id': mc_id,
-                'course_type': course_type
-            })
+            c = cats_ref.push({'name': cat_name, 'display_order': len(cats_cache) + 1, 'main_category_id': mc_id, 'course_type': course_type})
             cats_cache[cat_key] = c.key
-            
         cat_id = cats_cache[cat_key]
-        
+
         for item in section['items']:
-            # Special case for Ghee Rice in Kerala Speciality
-            item_course_type = course_type
             item_cat_id = cat_id
-            
             if 'Ghee Rice' in item['name']:
-                # Create a Rice category if not exists
                 rice_cat_key = f"{mc_id}_Rice"
                 if rice_cat_key not in cats_cache:
-                    rc = cats_ref.push({
-                        'name': 'Rice',
-                        'display_order': 100,
-                        'main_category_id': mc_id,
-                        'course_type': 'rice'
-                    })
+                    rc = cats_ref.push({'name': 'Rice', 'display_order': 100, 'main_category_id': mc_id, 'course_type': 'rice'})
                     cats_cache[rice_cat_key] = rc.key
                 item_cat_id = cats_cache[rice_cat_key]
 
@@ -270,16 +222,16 @@ def seed_new_menu():
                 'name': item['name'],
                 'description': item['description'] or f"Delicious {item['name']} from our {section_name.lower()} selection.",
                 'price': item['price'],
+                'image_url': CATEGORY_IMAGES.get(main_name),
                 'main_category_id': mc_id,
                 'category_id': item_cat_id,
                 'item_type': get_item_type(item['name']),
-                'spice_level': get_spice_level(item['name']),
+                'spice_level': 3,
                 'heaviness': 'medium',
                 'is_enabled': True,
-                'is_bestseller': '(Chef Signature Dish)' in item['name'] or '(Hotspot Signature Turkish Dish)' in item['name']
+                'is_bestseller': '(Chef Signature Dish)' in item['name'] or 'Signature' in item['name']
             })
-
-    print("SUCCESS: Menu updated successfully!")
+    print("SUCCESS: Menu updated with images!")
 
 if __name__ == '__main__':
     seed_new_menu()

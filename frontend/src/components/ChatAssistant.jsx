@@ -33,15 +33,17 @@ const CSS = `
 .copt:hover{background:#f5f5f5;border-color:#bbb}
 .copt.sel{background:#c05c28;color:#fff;border-color:#c05c28}
 .copt.dis{opacity:.45;cursor:default;pointer-events:none}
-.dcard{background:#fff;border:0.5px solid #eee;border-radius:12px;padding:10px 12px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:10px}
+.dcard{background:#fff;border:0.5px solid #eee;border-radius:12px;padding:10px 12px;cursor:pointer;transition:.15s;display:flex;align-items:flex-start;gap:12px}
 .dcard:hover{border-color:#c05c28}
 .dcard.chosen{border:1.5px solid #c05c28;background:#fff8f5}
 .dcard.dis{opacity:.5;pointer-events:none}
-.dcard-icon{font-size:24px;flex-shrink:0}
-.dcard-info{flex:1}
-.dcard-title{font-size:13px;font-weight:500;color:#333}
-.dcard-desc{font-size:11px;color:#666;margin-top:2px}
-.dcard-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+.dcard-img-wrap{width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#f5f5f5;display:flex;align-items:center;justify-content:center}
+.dcard-img{width:100%;height:100%;object-fit:cover}
+.dcard-icon{font-size:24px}
+.dcard-info{flex:1;min-width:0}
+.dcard-title{font-size:13px;font-weight:600;color:#333;line-height:1.4;word-break:break-word;overflow-wrap:anywhere}
+.dcard-desc{font-size:11px;color:#666;margin-top:2px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dcard-tags{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;align-items:center}
 .ctag{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:500}
 .ctag-pop{background:#faeeda;color:#633806}
 .ctag-veg{background:#e1f5ee;color:#085041}
@@ -436,12 +438,17 @@ export default function ChatAssistant({ restaurantId, initialMenuData, onAddToCa
             <div key={i}
               className={`dcard ${item.selName === d.name ? 'chosen' : ''} ${item.dis ? 'dis' : ''}`}
               onClick={() => !item.dis && item.onPick(d, item.id)}>
-              <div className="dcard-icon">🍽️</div>
+              <div className="dcard-img-wrap">
+                {d.image_url ? (
+                  <img src={d.image_url} alt={d.name} className="dcard-img" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }} />
+                ) : null}
+                <div className="dcard-icon" style={{ display: d.image_url ? 'none' : 'block' }}>🍽️</div>
+              </div>
               <div className="dcard-info">
                 <div className="dcard-title">{d.name}</div>
-                <div className="dcard-desc">{d.description}</div>
+                {d.description && <div className="dcard-desc">{d.description}</div>}
                 <div className="dcard-tags">
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#c05c28', marginRight: 4 }}>₹{d.price}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#c05c28', marginRight: 4 }}>₹{d.price}</span>
                   {d.is_bestseller && <span className="ctag ctag-pop">🔥 Popular</span>}
                   <span className={`ctag ${d.item_type === 'veg' ? 'ctag-veg' : 'ctag-nov'}`}>
                     {d.item_type === 'veg' ? 'Veg' : 'Non-Veg'}
