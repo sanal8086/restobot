@@ -88,30 +88,34 @@ def evaluate_meal():
         
     items = format_list(res_data.get('items'))
     active_items = [i for i in items if i.get('is_enabled') is not False]
-    menu_str = "\n".join([f"- ID: {i['id']}, Name: {i['name']}, Course: {i.get('course_type', 'other')}, Price: ₹{i['price']}" for i in active_items])
+    menu_str = "\n".join([f"- ID: {i['id']}, Name: {i['name']}, Course: {i.get('course_type', 'other')}, Price: ₹{i['price']}, Priority: {i.get('priority', 'medium')}, Bestseller: {i.get('is_bestseller', False)}" for i in active_items])
     
-    sel_str = ", ".join([f"{k.capitalize()}: {v.get('name')}" for k, v in selections.items() if v])
+    selected_names = [v.get('name') for k, v in selections.items() if v]
+    sel_str = ", ".join(selected_names)
+    primary_selection = selected_names[0] if selected_names else "your selection"
     
     system_prompt = f"""
-    You are an AI Menu Evaluator. The user is about to confirm the following meal selections:
-    Selections: {sel_str}
+    You are an AI Menu Evaluator for "{res_data.get('name')}".
+    The user has selected: {sel_str}
     
-    Your task is to analyze these selections and suggest EXACTLY ONE missing complementary item from the menu to enhance their dining experience.
+    Your task is to suggest EXACTLY ONE complementary item that would be a "perfect combination" with their current choice.
+    
+    STRICT PRIORITY RULES:
+    1. You MUST first look for items with Priority: "high" or Bestseller: True that complement the meal.
+    2. If no high-priority item fits, suggest a relevant matching item from the menu.
     
     Logic for suggestions:
-    - If they have ONLY Main Course(s), suggest a Starter or a Dessert.
-    - If they have ONLY Starters, suggest a Main Course.
-    - If they have a Main Course (Curry) but no Rice or Bread, suggest Ghee Rice or a Bread.
-    - If they have a heavy meal, suggest a Salad or a light Dessert.
-    - Always prefer suggesting a "Signature Dish" or "Bestseller" if it fits.
+    - If they have a Main Course (Curry) but no Rice/Bread, suggest a High Priority Bread/Rice.
+    - If they have only Main Courses, suggest a Signature Starter or Dessert.
+    - Use the phrasing: "Along with {primary_selection}, our {{{{suggested_item}}}} would be a perfect combination!"
     
-    Current Menu for "{res_data.get('name')}":
+    Current Menu:
     {menu_str}
     
     Response format (JSON ONLY):
     {{
-      "suggestion_text": "A friendly, persuasive suggestion. Example: 'Your meal looks great! Would you like to add our Signature Lahori Chicken as a starter to perfectly begin your feast?'",
-      "suggested_item_id": "The ID of the item, or null ONLY if they already have a perfectly balanced multi-course meal (Starter + Main + Rice/Bread)."
+      "suggestion_text": "Your persuasive suggestion using the 'perfect combination' phrasing.",
+      "suggested_item_id": "The ID of the suggested item. ONLY null if the user already has a 3+ course meal."
     }}
     """
     
